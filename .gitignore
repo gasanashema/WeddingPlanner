@@ -1,6 +1,8 @@
-# Requirement Documents (as explicitly requested)
+# Requirement & Plan Documents (as explicitly requested)
 requirements.md
 requrements.md
+implementation_plan.md
+plan.md
 
 # Dependencies & Build Outputs
 node_modules/
