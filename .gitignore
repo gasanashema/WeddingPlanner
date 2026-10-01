@@ -1,6 +1,7 @@
-# Requirement & Plan Documents
+# Requirement & Plan & History Documents
 requirements.md
 implementation_plan.md
+history.md
 
 # Dependencies & Build Outputs
 node_modules/
