@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  wedplan_frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wedplan_frontend
+    ports:
+      - "3000:80"
+    restart: always

@@ -1,0 +1,27 @@
+# Requirement Documents (as explicitly requested)
+requirements.md
+requrements.md
+
+# Dependencies & Build Outputs
+node_modules/
+dist/
+build/
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE & Editor files
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.DS_Store
+
+# Environment & Local Files
+.env
+.env.local
+.env.*.local
+*.log
+
+# Docker data
+postgres_data/

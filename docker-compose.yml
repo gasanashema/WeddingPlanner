@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  wedplan_db:
+    image: postgres:16-alpine
+    container_name: wedplan_db
+    restart: always
+    environment:
+      POSTGRES_DB: wedplandb
+      POSTGRES_USER: wedplan_user
+      POSTGRES_PASSWORD: wedplan_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wedplan_user -d wedplandb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # WedPlan Spring Boot Application Service (Backend)
+  wedplan_app:
+    build:
+      context: ./weddingPlanner-backend
+      dockerfile: Dockerfile
+    container_name: wedplan_app
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://wedplan_db:5432/wedplandb
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SPRING_DATASOURCE_USERNAME: wedplan_user
+      SPRING_DATASOURCE_PASSWORD: wedplan_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+    depends_on:
+      wedplan_db:
+        condition: service_healthy
+
+  # WedPlan Frontend Service (Nginx + Vite/React)
+  wedplan_frontend:
+    build:
+      context: ./WeddingPlanner-frontend
+      dockerfile: Dockerfile
+    container_name: wedplan_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - wedplan_app
+
+volumes:
+  postgres_data:
