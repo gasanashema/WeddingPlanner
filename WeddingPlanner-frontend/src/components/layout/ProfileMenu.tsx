@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDownIcon, LockIcon } from 'lucide-react';
+import { ChevronDownIcon, LockIcon, LogOutIcon } from 'lucide-react';
 import { useRole } from '../../contexts/RoleContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { EASE } from '../../utils/ui';
 import { Scope } from '../../types/wedding';
@@ -12,11 +13,15 @@ const allScopes: Scope[] = ['private-bride', 'private-groom', 'bride-side', 'gro
 
 export function ProfileMenu() {
   const { role, person, visibleScopes } = useRole();
+  const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const ref = useClickOutside<HTMLDivElement>(open, close);
   const hidden = allScopes.filter((s) => !visibleScopes.includes(s));
   const hiddenLabels = Array.from(new Set(hidden.map((s) => s === 'private-bride' ? "Aline's private" : s === 'private-groom' ? "Shema's private" : s === 'bride-side' ? 'Bride-side' : s === 'groom-side' ? 'Groom-side' : 'Shared')));
+
+  const displayName = user ? `${user.firstName} ${user.lastName}` : person.name;
+  const displayEmail = user ? user.email : person.email;
 
   return (
     <div ref={ref} className="relative">
@@ -29,7 +34,7 @@ export function ProfileMenu() {
         
         <Avatar role={role} size="sm" />
         <span className="hidden text-left md:block">
-          <span className="block text-sm font-medium leading-tight text-ink">{person.firstName}</span>
+          <span className="block text-sm font-medium leading-tight text-ink">{user ? user.firstName : person.firstName}</span>
           <span className="block text-[11px] leading-tight text-ink-500">{person.roleLabel}</span>
         </span>
         <ChevronDownIcon className="hidden h-4 w-4 text-ink-400 md:block" aria-hidden />
@@ -47,8 +52,8 @@ export function ProfileMenu() {
             <div className="flex items-center gap-3">
               <Avatar role={role} size="md" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-ink">{person.name}</p>
-                <p className="truncate text-xs text-ink-500">{person.email}</p>
+                <p className="truncate text-sm font-semibold text-ink">{displayName}</p>
+                <p className="truncate text-xs text-ink-500">{displayEmail}</p>
               </div>
             </div>
             <div className="mt-4 border-t border-line pt-4">
@@ -70,6 +75,19 @@ export function ProfileMenu() {
                   </ul>
                 </>
             }
+            </div>
+
+            <div className="mt-4 border-t border-line pt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  close();
+                }}
+                className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-md text-xs font-medium text-[#581C26] bg-[#581C26]/10 hover:bg-[#581C26]/20 transition-colors"
+              >
+                <LogOutIcon className="w-3.5 h-3.5" /> Sign Out
+              </button>
             </div>
           </motion.div>
         }

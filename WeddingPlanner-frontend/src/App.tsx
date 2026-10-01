@@ -19,6 +19,9 @@ import { HomePreparation } from './pages/HomePreparation';
 import { Invitations } from './pages/Invitations';
 import { DesignSystem } from './pages/DesignSystem';
 
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { Login } from './pages/Login';
+
 interface AppProps {
   /** Which of the four wedding accounts is signed in. */
   viewAs?: 'bride' | 'groom' | 'bride-support' | 'groom-support';
@@ -32,7 +35,14 @@ export function App({ viewAs = 'bride' }: AppProps) {
         <BrowserRouter>
           <QuickAddProvider>
             <Routes>
-              <Route element={<AppLayout />}>
+              <Route path="/login" element={<Login />} />
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
                 <Route path="/" element={<Overview />} />
                 <Route path="/my-planning" element={<MyPlanning />} />
                 <Route path="/shared" element={<SharedWedding />} />

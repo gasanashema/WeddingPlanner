@@ -48,7 +48,7 @@ docker compose up --build
 ```
 
 #### Access Points:
-- 🌐 **Frontend UI:** `http://localhost:3000`
+- 🌐 **Frontend UI:** `http://localhost:5173`
 - ⚡ **Backend API:** `http://localhost:8080/api/v1`
 - 🗄 **PostgreSQL Database:** `localhost:5432` (`wedplandb`)
 
