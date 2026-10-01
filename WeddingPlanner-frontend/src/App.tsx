@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { AuthProvider } from './contexts/AuthContext';
 import { RoleProvider } from './contexts/RoleContext';
 import { WeddingDataProvider } from './contexts/WeddingDataContext';
 import { QuickAddProvider } from './contexts/QuickAddContext';
@@ -25,8 +26,9 @@ interface AppProps {
 
 export function App({ viewAs = 'bride' }: AppProps) {
   return (
-    <RoleProvider role={viewAs}>
-      <WeddingDataProvider>
+    <AuthProvider>
+      <RoleProvider role={viewAs}>
+        <WeddingDataProvider>
         <BrowserRouter>
           <QuickAddProvider>
             <Routes>
@@ -55,6 +57,7 @@ export function App({ viewAs = 'bride' }: AppProps) {
           }} />
         
       </WeddingDataProvider>
-    </RoleProvider>);
+    </RoleProvider>
+  </AuthProvider>);
 
 }
