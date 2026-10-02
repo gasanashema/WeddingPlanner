@@ -131,13 +131,6 @@ Wedding-System/
 
 ---
 
-## 🔑 External Services & Production Credentials
-
-For step-by-step setup guides on acquiring, configuring, and deploying production credentials (Google OAuth2, GitHub OAuth2, MongoDB Atlas, Redis Cloud, MoMo Webhook, Twilio, SMTP), see:
-- 📖 [External Services & API Keys Guide](docs/EXTERNAL_SERVICES_GUIDE.md)
-
----
-
 ## 🔒 Security & Authorization Rules
 
 1. **Backend Authorization:** Security is strictly enforced on the server via JWT bearer tokens. Frontend view filters are for UX only.
