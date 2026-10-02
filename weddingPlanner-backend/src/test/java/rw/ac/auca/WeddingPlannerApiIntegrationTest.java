@@ -167,10 +167,10 @@ public class WeddingPlannerApiIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.name").value("Grand Evening Reception"));
 
-        // 10. List Ceremonies by Wedding ID
+        // 10. List Ceremonies by Wedding ID (4 default seeded + 2 newly added = 6)
         mockMvc.perform(get("/api/v1/ceremonies?weddingId=" + weddingId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(2));
+                .andExpect(jsonPath("$.data.length()").value(6));
 
         // 11. Update Ceremony
         UpdateCeremonyRequest updateCeremonyRequest = UpdateCeremonyRequest.builder()
@@ -188,9 +188,9 @@ public class WeddingPlannerApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        // Verify remaining ceremony count
+        // Verify remaining ceremony count (6 - 1 = 5)
         mockMvc.perform(get("/api/v1/ceremonies?weddingId=" + weddingId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1));
+                .andExpect(jsonPath("$.data.length()").value(5));
     }
 }
