@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 @SpringBootApplication(scanBasePackages = "rw.ac.auca")
 @EntityScan(basePackages = "rw.ac.auca")
-@EnableJpaRepositories(basePackages = {"rw.ac.auca.user", "rw.ac.auca.wedding", "rw.ac.auca.ceremony", "rw.ac.auca.auth"})
+@EnableJpaRepositories(basePackages = {"rw.ac.auca.user", "rw.ac.auca.wedding", "rw.ac.auca.ceremony", "rw.ac.auca.auth", "rw.ac.auca.task"})
 @EnableMongoRepositories(basePackages = "rw.ac.auca.nosql")
 public class WeddingPlannerApplication {
 
