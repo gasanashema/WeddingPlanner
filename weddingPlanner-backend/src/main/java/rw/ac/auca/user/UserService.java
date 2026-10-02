@@ -15,6 +15,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -22,11 +23,13 @@ public class UserService {
         }
 
         Role role = request.getRole() != null ? request.getRole() : Role.ROLE_GUEST;
+        String rawPassword = request.getPassword() != null ? request.getPassword() : "DefaultPassword123!";
 
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .email(request.getEmail())
+                .password(passwordEncoder.encode(rawPassword))
                 .phoneNumber(request.getPhoneNumber())
                 .role(role)
                 .enabled(true)

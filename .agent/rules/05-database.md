@@ -15,16 +15,19 @@ relationships without checking the schema.
 Preserve existing data and behavior
 unless a change is explicitly required.
 
-## 2. Database Technology
+## 2. Database Technology & Dual Database Architecture
 
-Use the database already configured
-for the project.
+The project strictly mandates a **Dual Database Architecture**:
 
-Follow the existing ORM and
-persistence conventions.
+1. **Relational Database (PostgreSQL / H2):**
+   - Responsible for ACID-compliant structured core entities: `User`, `Wedding`, `WeddingMember`, `WeddingCeremony`, `Task`, `Budget`, `Expense`, `Guest`, `Invitation`, `SeatingTable`, `Vendor`, `HomePreparation`.
+   - Strictly enforces primary keys, foreign keys, unique constraints, NOT NULL constraints, relational integrity, and schema versioning via Flyway.
 
-Do not introduce another persistence
-technology without approval.
+2. **Non-Relational Database (MongoDB / Redis):**
+   - Responsible for high-volume, unstructured, dynamic, or operational data.
+   - **MongoDB:** System activity logs, audit trails, digital invitation view analytics, and un-structured event payloads.
+   - **Redis:** Token blacklist, session cache, dynamic performance caching, and distributed rate-limiting counters.
+   - Do NOT duplicate core relational entities into the NoSQL store without a clear performance or domain justification.
 
 ## 3. Entity Design
 

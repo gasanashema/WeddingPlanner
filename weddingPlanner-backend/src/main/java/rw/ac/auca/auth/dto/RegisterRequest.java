@@ -1,4 +1,4 @@
-package rw.ac.auca.user.dto;
+package rw.ac.auca.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 import rw.ac.auca.user.Role;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-public class CreateUserRequest {
+@NoArgsConstructor
+@AllArgsConstructor
+public class RegisterRequest {
     private String firstName;
     private String lastName;
     private String email;

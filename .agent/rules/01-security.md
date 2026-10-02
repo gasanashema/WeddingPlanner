@@ -18,16 +18,16 @@ Use:
 
 Never treat frontend checks as security controls.
 
-## 2. Authentication
+## 2. Authentication & OAuth2 Integration
 
+- Authentication must support both **Stateless JWT** and **OAuth2 Mechanisms** (OAuth2 Social Login via Google/GitHub and Spring Security OAuth2 Resource Server integration).
 - Never store plaintext passwords.
-- Hash passwords using a suitable password
-  hashing algorithm.
+- Hash passwords using BCrypt with strength >= 12.
 - Never expose password hashes through APIs.
-- Never log passwords or authentication tokens.
-- Set appropriate token expiration.
-- Protect authentication endpoints.
-- Use secure session/cookie settings when applicable.
+- Never log passwords, JWT tokens, OAuth2 access/refresh tokens, or client secrets.
+- Set appropriate token expiration (24h JWT, short-lived OAuth tokens).
+- Protect all authentication endpoints with strict rate limiting.
+- Securely map OAuth2 user profile attributes (email, name, picture) to internal user accounts.
 
 ## 3. Authorization
 
