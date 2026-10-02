@@ -2,6 +2,7 @@
 requirements.md
 implementation_plan.md
 history.md
+docs/EXTERNAL_SERVICES_GUIDE.md
 
 # Dependencies & Build Outputs
 node_modules/

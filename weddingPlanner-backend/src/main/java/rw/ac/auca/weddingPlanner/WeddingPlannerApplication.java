@@ -4,10 +4,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @SpringBootApplication(scanBasePackages = "rw.ac.auca")
 @EntityScan(basePackages = "rw.ac.auca")
-@EnableJpaRepositories(basePackages = "rw.ac.auca")
+@EnableJpaRepositories(basePackages = {"rw.ac.auca.user", "rw.ac.auca.wedding", "rw.ac.auca.ceremony", "rw.ac.auca.auth"})
+@EnableMongoRepositories(basePackages = "rw.ac.auca.nosql")
 public class WeddingPlannerApplication {
 
 	public static void main(String[] args) {
