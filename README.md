@@ -16,6 +16,14 @@
 
 ---
 
+## 📐 System Class Diagram & Domain Model
+
+![Ubukwe System Domain Model Class Diagram](docs/domain-model-class-diagram.png)
+
+*The conceptual domain model above details entity relationships, domain boundaries (Identity & Membership, Wedding Planning, Budget & Finance, Seating Management, Guests & Invitations), enums, and multiplicity constraints across the Ubukwe system.*
+
+---
+
 ## 🛠 Tech Stack
 
 - **Backend:** Java 21, Spring Boot 3.3.4, Spring Security, Spring Data JPA, JWT Authentication, PostgreSQL / H2 Database, Maven.
