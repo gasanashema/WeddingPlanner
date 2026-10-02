@@ -18,6 +18,26 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # MongoDB NoSQL Database Service (Audit & Activity Logs)
+  wedplan_mongo:
+    image: mongo:7-jammy
+    container_name: wedplan_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # Redis NoSQL Key-Value Cache & Rate Limiter Service
+  wedplan_redis:
+    image: redis:7-alpine
+    container_name: wedplan_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
   # WedPlan Spring Boot Application Service (Backend)
   wedplan_app:
     build:
@@ -34,9 +54,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: wedplan_password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_DATA_MONGODB_URI: mongodb://wedplan_mongo:27017/wedplan_logs
+      SPRING_REDIS_HOST: wedplan_redis
+      SPRING_REDIS_PORT: 6379
     depends_on:
       wedplan_db:
         condition: service_healthy
+      - wedplan_mongo
+      - wedplan_redis
 
   # WedPlan Frontend Service (Nginx + Vite/React)
   wedplan_frontend:
@@ -52,3 +77,5 @@ services:
 
 volumes:
   postgres_data:
+  mongo_data:
+  redis_data:

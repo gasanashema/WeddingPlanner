@@ -27,6 +27,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -35,10 +37,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/api/public/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/api/public/**", "/api/v1/public/**", "/h2-console/**", "/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -65,5 +71,24 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+    public org.springframework.security.oauth2.client.registration.ClientRegistrationRepository clientRegistrationRepository() {
+        org.springframework.security.oauth2.client.registration.ClientRegistration googleRegistration = 
+                org.springframework.security.oauth2.client.registration.ClientRegistration.withRegistrationId("google")
+                .clientId("dev-google-client-id")
+                .clientSecret("dev-google-client-secret")
+                .authorizationGrantType(org.springframework.security.oauth2.core.AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
+                .scope("email", "profile")
+                .authorizationUri("https://accounts.google.com/o/oauth2/v2/auth")
+                .tokenUri("https://www.googleapis.com/oauth2/v4/token")
+                .userInfoUri("https://www.googleapis.com/oauth2/v3/userinfo")
+                .userNameAttributeName("sub")
+                .clientName("Google")
+                .build();
+        return new org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository(googleRegistration);
     }
 }
