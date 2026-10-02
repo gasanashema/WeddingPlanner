@@ -118,18 +118,24 @@ Examples:
 
 Avoid unnecessary transactions.
 
-## 8. Error Handling
+## 8. Error Handling & Rate Limiting
 
-Use meaningful application exceptions.
+Use meaningful application exceptions and consistent HTTP status codes.
 
-Use consistent error codes.
+Return safe error messages and standard JSON response payloads (`ApiResponse<T>`).
 
-Return safe messages to clients.
+Implement server-side rate limiting (e.g. Bucket4j or Redis-based rate limiter) on auth endpoints (`/api/v1/auth/*`) and public RSVP endpoints (`/api/v1/public/*`). Return HTTP 429 Too Many Requests when limits are exceeded.
 
-Log technical details appropriately.
+## 8b. Asynchronous Messaging with RabbitMQ
 
-Do not use generic success responses
-for failed operations.
+Use **RabbitMQ** for decoupling asynchronous workflows, including:
+
+- Digital invitation email dispatches (`wedding.invitations.email` queue)
+- SMS invitation / RSVP reminders (`wedding.invitations.sms` queue)
+- System audit logging events (`wedding.audit.events` queue)
+- Async RSVP status push notifications
+
+Enforce idempotent message consumers, retry mechanisms with dead-letter exchanges (DLX), and transactional message publishing.
 
 ## 9. Performance
 

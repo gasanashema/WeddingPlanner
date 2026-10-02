@@ -19,12 +19,10 @@ export function Sidebar({ onNavigate }: {onNavigate?: () => void;}) {
 
   return (
     <div className="flex h-full w-64 flex-col border-r border-line bg-surface">
-      <div className="flex items-center gap-2.5 px-5 pb-4 pt-5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-wine-700">
-          <span className="font-serif text-lg leading-none text-gold-200">U</span>
-        </span>
+      <div className="flex items-center gap-3 px-5 pb-4 pt-5">
+        <img src="/logo.png" alt="Ubukwe Logo" className="h-10 w-auto object-contain" />
         <div>
-          <p className="font-serif text-[17px] font-semibold leading-none text-ink">Ubukwe</p>
+          <p className="font-serif text-[17px] font-bold leading-none text-ink">Ubukwe</p>
           <p className="mt-1 text-[11px] text-ink-500">Wedding planning</p>
         </div>
       </div>

@@ -30,7 +30,7 @@ export function Login() {
           phoneNumber,
           role,
         });
-        toast.success('Account created successfully! Welcome to WedPlan.');
+        toast.success('Account created successfully! Welcome to Ubukwe.');
       } else {
         await login({ email, password });
         toast.success('Signed in successfully!');
@@ -70,13 +70,13 @@ export function Login() {
   return (
     <div className="min-h-screen bg-[#FBF9F5] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#581C26] text-[#C5A059] shadow-md mb-3">
-          <HeartIcon className="w-7 h-7 fill-[#C5A059]" />
+        <div className="inline-flex items-center justify-center mb-2">
+          <img src="/logo.png" alt="Ubukwe Logo" className="h-24 w-auto object-contain" />
         </div>
         <h1 className="text-3xl font-serif font-bold text-[#1F1B1A] tracking-tight">
-          WedPlan Rwanda
+          Ubukwe
         </h1>
-        <p className="mt-2 text-sm text-[#6E6663]">
+        <p className="mt-1 text-sm text-[#6E6663]">
           Centralized & Collaborative Wedding Planning Platform
         </p>
       </div>

@@ -148,9 +148,19 @@ At the end of a task, report:
 If the task is part of a phase, stop and wait
 for user confirmation.
 
-## 10. Git Branching & Commit Policy
+## 10. Git Branching & Pull Request Policy
 
 - Every feature / phase must be developed on a dedicated feature branch created from `main`.
 - Branch naming convention: `feature/<phase-number>-<feature-description>` (e.g., `feature/phase-1-auth-user-management`).
-- Commit after each completed feature / phase with a clear, descriptive commit message.
-- Maintain a clean commit history without breaking existing history or force-pushing unexpectedly.
+- Commit after each completed feature / phase with clear, descriptive commit messages.
+- Upon completion of the project phases, submit a clean Pull/Merge Request (PR/MR) to the `main` branch.
+
+## 11. Mandatory Project Modeling & Architecture Standards
+
+All system developments must maintain alignment with:
+
+1. **Problem Statement & Scope:** Rwanda collaborative wedding management platform with bride/groom side privacy isolation.
+2. **Measurable NFRs:** Response time <150ms for GETs, 99.9% availability, strict BCrypt + JWT + OAuth2 security.
+3. **User Stories & Acceptance Criteria:** Formal user stories with clear, testable acceptance criteria.
+4. **Conceptual Domain Model & ER/UML Diagrams:** Pure implementation-independent domain model and detailed relational/non-relational schema design.
+5. **Dual Database & RabbitMQ Architecture:** PostgreSQL for transactional relational core, MongoDB/Redis for NoSQL operational logs/cache, RabbitMQ for async email/SMS/events.
