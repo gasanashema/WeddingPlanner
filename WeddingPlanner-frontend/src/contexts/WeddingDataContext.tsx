@@ -6,6 +6,8 @@ import { guests as initialGuests } from '../data/guests';
 import { homeItems as initialHomeItems } from '../data/homePreparation';
 import { vendors as initialVendors } from '../data/vendors';
 import { weddingApi, WeddingDto, CeremonyDto } from '../api/weddingApi';
+import { homePrepApi, mapDtoToHomeItem, mapCategoryToBackend } from '../api/homePrepApi';
+import { templateApi } from '../api/templateApi';
 import { useAuth } from './AuthContext';
 
 interface WeddingDataValue {
@@ -24,9 +26,11 @@ interface WeddingDataValue {
   addGuest: (g: Omit<Guest, 'id'>) => void;
   updateGuest: (id: string, patch: Partial<Guest>) => void;
   homeItems: HomeItem[];
-  addHomeItem: (h: Omit<HomeItem, 'id'>) => void;
-  updateHomeItem: (id: string, patch: Partial<HomeItem>) => void;
-  deleteHomeItem: (id: string) => void;
+  fetchHomeItems: () => Promise<void>;
+  addHomeItem: (h: Omit<HomeItem, 'id'>) => Promise<void>;
+  updateHomeItem: (id: string, patch: Partial<HomeItem>) => Promise<void>;
+  deleteHomeItem: (id: string) => Promise<void>;
+  applyTemplate: (templateId: number, side?: 'BRIDE_SIDE' | 'GROOM_SIDE' | 'SHARED') => Promise<void>;
   vendors: Vendor[];
   addVendor: (v: Omit<Vendor, 'id'>) => void;
 }
@@ -46,6 +50,19 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
   const [homeItems, setHomeItems] = useState<HomeItem[]>(initialHomeItems);
   const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
 
+  const fetchHomeItems = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await homePrepApi.getHomePreps();
+      if (res.success && res.data && res.data.length > 0) {
+        const mapped = res.data.map(mapDtoToHomeItem);
+        setHomeItems(mapped);
+      }
+    } catch {
+      // Fallback to local default if backend fetch fails
+    }
+  }, [user]);
+
   const fetchActiveWedding = useCallback(async () => {
     if (!user) {
       setActiveWedding(null);
@@ -60,15 +77,15 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
         if (res.data.ceremonies) {
           setCeremonies(res.data.ceremonies);
         }
+        await fetchHomeItems();
       }
     } catch {
-      // User has no active wedding yet
       setActiveWedding(null);
       setCeremonies([]);
     } finally {
       setLoadingWedding(false);
     }
-  }, [user]);
+  }, [user, fetchHomeItems]);
 
   useEffect(() => {
     fetchActiveWedding();
@@ -86,13 +103,95 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
     (id: string, patch: Partial<Guest>) => setGuests((p) => p.map((g) => g.id === id ? { ...g, ...patch } : g)),
     []
   );
-  const addHomeItem = useCallback((h: Omit<HomeItem, 'id'>) => setHomeItems((p) => [...p, { ...h, id: uid('h') }]), []);
+
+  const addHomeItem = useCallback(
+    async (h: Omit<HomeItem, 'id'>) => {
+      if (activeWedding) {
+        try {
+          const payload = {
+            weddingId: activeWedding.id,
+            category: mapCategoryToBackend(h.category),
+            itemName: h.name,
+            side: h.side === 'bride' ? ('BRIDE_SIDE' as const) : ('GROOM_SIDE' as const),
+            budgetRwf: h.budget,
+            dueDate: h.deadline,
+            isCompleted: h.completed,
+            notes: h.notes,
+          };
+          const res = await homePrepApi.createHomePrep(payload);
+          if (res.success && res.data) {
+            const newItem = mapDtoToHomeItem(res.data);
+            setHomeItems((p) => [...p, newItem]);
+            return;
+          }
+        } catch {
+          // Fall back to local update if network error
+        }
+      }
+      setHomeItems((p) => [...p, { ...h, id: uid('h') }]);
+    },
+    [activeWedding]
+  );
+
   const updateHomeItem = useCallback(
-    (id: string, patch: Partial<HomeItem>) =>
-      setHomeItems((p) => p.map((h) => h.id === id ? { ...h, ...patch } : h)),
+    async (id: string, patch: Partial<HomeItem>) => {
+      const numId = Number(id);
+      if (!isNaN(numId) && activeWedding) {
+        try {
+          const payload: Record<string, unknown> = {};
+          if (patch.name) payload.itemName = patch.name;
+          if (patch.category) payload.category = mapCategoryToBackend(patch.category);
+          if (patch.side) payload.side = patch.side === 'bride' ? 'BRIDE_SIDE' : 'GROOM_SIDE';
+          if (patch.budget !== undefined) payload.budgetRwf = patch.budget;
+          if (patch.deadline) payload.dueDate = patch.deadline;
+          if (patch.completed !== undefined) payload.isCompleted = patch.completed;
+          if (patch.notes !== undefined) payload.notes = patch.notes;
+
+          const res = await homePrepApi.updateHomePrep(numId, payload);
+          if (res.success && res.data) {
+            const updated = mapDtoToHomeItem(res.data);
+            setHomeItems((p) => p.map((item) => (item.id === id ? updated : item)));
+            return;
+          }
+        } catch {
+          // Fall back to local update if network error
+        }
+      }
+      setHomeItems((p) => p.map((h) => (h.id === id ? { ...h, ...patch } : h)));
+    },
+    [activeWedding]
+  );
+
+  const deleteHomeItem = useCallback(
+    async (id: string) => {
+      const numId = Number(id);
+      if (!isNaN(numId) && activeWedding) {
+        try {
+          await homePrepApi.deleteHomePrep(numId);
+        } catch {
+          // Fall back to local delete
+        }
+      }
+      setHomeItems((p) => p.filter((h) => h.id !== id));
+    },
+    [activeWedding]
+  );
+
+  const applyTemplate = useCallback(
+    async (templateId: number, side?: 'BRIDE_SIDE' | 'GROOM_SIDE' | 'SHARED') => {
+      try {
+        const res = await templateApi.applyTemplate(templateId, { side });
+        if (res.success && res.data) {
+          const newItems = res.data.map(mapDtoToHomeItem);
+          setHomeItems((prev) => [...prev, ...newItems]);
+        }
+      } catch {
+        // Handle error silently or via caller
+      }
+    },
     []
   );
-  const deleteHomeItem = useCallback((id: string) => setHomeItems((p) => p.filter((h) => h.id !== id)), []);
+
   const addVendor = useCallback((v: Omit<Vendor, 'id'>) => setVendors((p) => [{ ...v, id: uid('v') }, ...p]), []);
 
   const value = useMemo(
@@ -105,14 +204,14 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
       tasks, addTask, updateTask, deleteTask,
       expenses, addExpense,
       guests, addGuest, updateGuest,
-      homeItems, addHomeItem, updateHomeItem, deleteHomeItem,
+      homeItems, fetchHomeItems, addHomeItem, updateHomeItem, deleteHomeItem, applyTemplate,
       vendors, addVendor
     }),
     [
       activeWedding, loadingWedding, ceremonies, fetchActiveWedding,
-      tasks, expenses, guests, homeItems, vendors,
+      tasks, expenses, guests, homeItems, fetchHomeItems, vendors,
       addTask, updateTask, deleteTask, addExpense, addGuest, updateGuest,
-      addHomeItem, updateHomeItem, deleteHomeItem, addVendor
+      addHomeItem, updateHomeItem, deleteHomeItem, applyTemplate, addVendor
     ]
   );
 
