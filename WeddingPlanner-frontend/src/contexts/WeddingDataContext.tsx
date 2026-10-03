@@ -1,12 +1,19 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Expense, Guest, HomeItem, Task, Vendor } from '../types/wedding';
 import { tasks as initialTasks } from '../data/tasks';
 import { expenses as initialExpenses } from '../data/budget';
 import { guests as initialGuests } from '../data/guests';
 import { homeItems as initialHomeItems } from '../data/homePreparation';
 import { vendors as initialVendors } from '../data/vendors';
+import { weddingApi, WeddingDto, CeremonyDto } from '../api/weddingApi';
+import { useAuth } from './AuthContext';
 
 interface WeddingDataValue {
+  activeWedding: WeddingDto | null;
+  loadingWedding: boolean;
+  ceremonies: CeremonyDto[];
+  fetchActiveWedding: () => Promise<void>;
+  setActiveWedding: (w: WeddingDto | null) => void;
   tasks: Task[];
   addTask: (t: Omit<Task, 'id'>) => void;
   updateTask: (id: string, patch: Partial<Task>) => void;
@@ -27,12 +34,45 @@ interface WeddingDataValue {
 const WeddingDataContext = createContext<WeddingDataValue | null>(null);
 const uid = (p: string) => `${p}-${Math.random().toString(36).slice(2, 9)}`;
 
-export function WeddingDataProvider({ children }: {children: React.ReactNode;}) {
+export function WeddingDataProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const [activeWedding, setActiveWedding] = useState<WeddingDto | null>(null);
+  const [ceremonies, setCeremonies] = useState<CeremonyDto[]>([]);
+  const [loadingWedding, setLoadingWedding] = useState<boolean>(false);
+
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [guests, setGuests] = useState<Guest[]>(initialGuests);
   const [homeItems, setHomeItems] = useState<HomeItem[]>(initialHomeItems);
   const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
+
+  const fetchActiveWedding = useCallback(async () => {
+    if (!user) {
+      setActiveWedding(null);
+      setCeremonies([]);
+      return;
+    }
+    setLoadingWedding(true);
+    try {
+      const res = await weddingApi.getMyWedding();
+      if (res.success && res.data) {
+        setActiveWedding(res.data);
+        if (res.data.ceremonies) {
+          setCeremonies(res.data.ceremonies);
+        }
+      }
+    } catch {
+      // User has no active wedding yet
+      setActiveWedding(null);
+      setCeremonies([]);
+    } finally {
+      setLoadingWedding(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchActiveWedding();
+  }, [fetchActiveWedding]);
 
   const addTask = useCallback((t: Omit<Task, 'id'>) => setTasks((p) => [{ ...t, id: uid('t') }, ...p]), []);
   const updateTask = useCallback(
@@ -49,7 +89,7 @@ export function WeddingDataProvider({ children }: {children: React.ReactNode;}) 
   const addHomeItem = useCallback((h: Omit<HomeItem, 'id'>) => setHomeItems((p) => [...p, { ...h, id: uid('h') }]), []);
   const updateHomeItem = useCallback(
     (id: string, patch: Partial<HomeItem>) =>
-    setHomeItems((p) => p.map((h) => h.id === id ? { ...h, ...patch } : h)),
+      setHomeItems((p) => p.map((h) => h.id === id ? { ...h, ...patch } : h)),
     []
   );
   const deleteHomeItem = useCallback((id: string) => setHomeItems((p) => p.filter((h) => h.id !== id)), []);
@@ -57,13 +97,23 @@ export function WeddingDataProvider({ children }: {children: React.ReactNode;}) 
 
   const value = useMemo(
     () => ({
+      activeWedding,
+      loadingWedding,
+      ceremonies,
+      fetchActiveWedding,
+      setActiveWedding,
       tasks, addTask, updateTask, deleteTask,
       expenses, addExpense,
       guests, addGuest, updateGuest,
       homeItems, addHomeItem, updateHomeItem, deleteHomeItem,
       vendors, addVendor
     }),
-    [tasks, expenses, guests, homeItems, vendors, addTask, updateTask, deleteTask, addExpense, addGuest, updateGuest, addHomeItem, updateHomeItem, deleteHomeItem, addVendor]
+    [
+      activeWedding, loadingWedding, ceremonies, fetchActiveWedding,
+      tasks, expenses, guests, homeItems, vendors,
+      addTask, updateTask, deleteTask, addExpense, addGuest, updateGuest,
+      addHomeItem, updateHomeItem, deleteHomeItem, addVendor
+    ]
   );
 
   return <WeddingDataContext.Provider value={value}>{children}</WeddingDataContext.Provider>;
