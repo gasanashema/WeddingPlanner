@@ -9,6 +9,7 @@ import { weddingApi, WeddingDto, CeremonyDto } from '../api/weddingApi';
 import { homePrepApi, mapDtoToHomeItem, mapCategoryToBackend } from '../api/homePrepApi';
 import { templateApi } from '../api/templateApi';
 import { budgetApi, BudgetSummaryDto, mapExpenseDtoToExpense } from '../api/budgetApi';
+import { guestApi, mapGuestDtoToGuest } from '../api/guestApi';
 import { useAuth } from './AuthContext';
 
 interface WeddingDataValue {
@@ -27,7 +28,8 @@ interface WeddingDataValue {
   addExpense: (e: Omit<Expense, 'id'>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   guests: Guest[];
-  addGuest: (g: Omit<Guest, 'id'>) => void;
+  fetchGuests: () => Promise<void>;
+  addGuest: (g: Omit<Guest, 'id'>) => Promise<void>;
   updateGuest: (id: string, patch: Partial<Guest>) => void;
   homeItems: HomeItem[];
   fetchHomeItems: () => Promise<void>;
@@ -54,6 +56,19 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
   const [guests, setGuests] = useState<Guest[]>(initialGuests);
   const [homeItems, setHomeItems] = useState<HomeItem[]>(initialHomeItems);
   const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
+
+  const fetchGuests = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await guestApi.getGuests();
+      if (res.success && res.data && res.data.length > 0) {
+        const mapped = res.data.map(mapGuestDtoToGuest);
+        setGuests(mapped);
+      }
+    } catch {
+      // Fallback to local default guests
+    }
+  }, [user]);
 
   const fetchBudgetSummary = useCallback(async () => {
     if (!user) return;
@@ -98,7 +113,7 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
         if (res.data.ceremonies) {
           setCeremonies(res.data.ceremonies);
         }
-        await Promise.all([fetchHomeItems(), fetchBudgetSummary()]);
+        await Promise.all([fetchHomeItems(), fetchBudgetSummary(), fetchGuests()]);
       }
     } catch {
       setActiveWedding(null);
@@ -106,7 +121,7 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
     } finally {
       setLoadingWedding(false);
     }
-  }, [user, fetchHomeItems, fetchBudgetSummary]);
+  }, [user, fetchHomeItems, fetchBudgetSummary, fetchGuests]);
 
   useEffect(() => {
     fetchActiveWedding();
@@ -169,7 +184,47 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
     [activeWedding, fetchBudgetSummary]
   );
 
-  const addGuest = useCallback((g: Omit<Guest, 'id'>) => setGuests((p) => [{ ...g, id: uid('g') }, ...p]), []);
+  const addGuest = useCallback(
+    async (g: Omit<Guest, 'id'>) => {
+      if (activeWedding) {
+        try {
+          const side =
+            g.side === 'bride'
+              ? ('BRIDE_SIDE' as const)
+              : g.side === 'groom'
+              ? ('GROOM_SIDE' as const)
+              : ('SHARED' as const);
+
+          const cat =
+            g.group.toUpperCase().includes('VIP')
+              ? ('VIP' as const)
+              : g.group.toUpperCase().includes('FAMILY')
+              ? ('FAMILY' as const)
+              : ('FRIEND' as const);
+
+          const payload = {
+            weddingId: activeWedding.id,
+            fullName: g.name,
+            phone: g.phone,
+            side,
+            category: cat,
+            plusOneAllowed: g.plusOnes,
+          };
+          const res = await guestApi.createGuest(payload);
+          if (res.success && res.data) {
+            const newGuest = mapGuestDtoToGuest(res.data);
+            setGuests((p) => [newGuest, ...p]);
+            return;
+          }
+        } catch {
+          // Fall back to local update
+        }
+      }
+      setGuests((p) => [{ ...g, id: uid('g') }, ...p]);
+    },
+    [activeWedding]
+  );
+
   const updateGuest = useCallback(
     (id: string, patch: Partial<Guest>) => setGuests((p) => p.map((g) => g.id === id ? { ...g, ...patch } : g)),
     []
@@ -214,7 +269,7 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
           if (patch.category) payload.category = mapCategoryToBackend(patch.category);
           if (patch.side) payload.side = patch.side === 'bride' ? 'BRIDE_SIDE' : 'GROOM_SIDE';
           if (patch.budget !== undefined) payload.budgetRwf = patch.budget;
-          if (patch.deadline) payload.dueDate = patch.deadline;
+          if (patch.deadline) payload.deadline = patch.deadline;
           if (patch.completed !== undefined) payload.isCompleted = patch.completed;
           if (patch.notes !== undefined) payload.notes = patch.notes;
 
@@ -274,13 +329,13 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
       setActiveWedding,
       tasks, addTask, updateTask, deleteTask,
       expenses, budgetSummary, fetchBudgetSummary, addExpense, deleteExpense,
-      guests, addGuest, updateGuest,
+      guests, fetchGuests, addGuest, updateGuest,
       homeItems, fetchHomeItems, addHomeItem, updateHomeItem, deleteHomeItem, applyTemplate,
       vendors, addVendor
     }),
     [
       activeWedding, loadingWedding, ceremonies, fetchActiveWedding,
-      tasks, expenses, budgetSummary, fetchBudgetSummary, guests, homeItems, fetchHomeItems, vendors,
+      tasks, expenses, budgetSummary, fetchBudgetSummary, guests, fetchGuests, homeItems, fetchHomeItems, vendors,
       addTask, updateTask, deleteTask, addExpense, deleteExpense, addGuest, updateGuest,
       addHomeItem, updateHomeItem, deleteHomeItem, applyTemplate, addVendor
     ]
