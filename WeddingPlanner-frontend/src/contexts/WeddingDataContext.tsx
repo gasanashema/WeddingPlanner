@@ -8,6 +8,7 @@ import { vendors as initialVendors } from '../data/vendors';
 import { weddingApi, WeddingDto, CeremonyDto } from '../api/weddingApi';
 import { homePrepApi, mapDtoToHomeItem, mapCategoryToBackend } from '../api/homePrepApi';
 import { templateApi } from '../api/templateApi';
+import { budgetApi, BudgetSummaryDto, mapExpenseDtoToExpense } from '../api/budgetApi';
 import { useAuth } from './AuthContext';
 
 interface WeddingDataValue {
@@ -21,7 +22,10 @@ interface WeddingDataValue {
   updateTask: (id: string, patch: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   expenses: Expense[];
-  addExpense: (e: Omit<Expense, 'id'>) => void;
+  budgetSummary: BudgetSummaryDto | null;
+  fetchBudgetSummary: () => Promise<void>;
+  addExpense: (e: Omit<Expense, 'id'>) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
   guests: Guest[];
   addGuest: (g: Omit<Guest, 'id'>) => void;
   updateGuest: (id: string, patch: Partial<Guest>) => void;
@@ -46,9 +50,26 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
 
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const [budgetSummary, setBudgetSummary] = useState<BudgetSummaryDto | null>(null);
   const [guests, setGuests] = useState<Guest[]>(initialGuests);
   const [homeItems, setHomeItems] = useState<HomeItem[]>(initialHomeItems);
   const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
+
+  const fetchBudgetSummary = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await budgetApi.getBudgetSummary();
+      if (res.success && res.data) {
+        setBudgetSummary(res.data);
+        if (res.data.expenses && res.data.expenses.length > 0) {
+          const mapped = res.data.expenses.map(mapExpenseDtoToExpense);
+          setExpenses(mapped);
+        }
+      }
+    } catch {
+      // Fallback to initial local expenses
+    }
+  }, [user]);
 
   const fetchHomeItems = useCallback(async () => {
     if (!user) return;
@@ -77,7 +98,7 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
         if (res.data.ceremonies) {
           setCeremonies(res.data.ceremonies);
         }
-        await fetchHomeItems();
+        await Promise.all([fetchHomeItems(), fetchBudgetSummary()]);
       }
     } catch {
       setActiveWedding(null);
@@ -85,7 +106,7 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
     } finally {
       setLoadingWedding(false);
     }
-  }, [user, fetchHomeItems]);
+  }, [user, fetchHomeItems, fetchBudgetSummary]);
 
   useEffect(() => {
     fetchActiveWedding();
@@ -97,7 +118,57 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
     []
   );
   const deleteTask = useCallback((id: string) => setTasks((p) => p.filter((t) => t.id !== id)), []);
-  const addExpense = useCallback((e: Omit<Expense, 'id'>) => setExpenses((p) => [{ ...e, id: uid('e') }, ...p]), []);
+
+  const addExpense = useCallback(
+    async (e: Omit<Expense, 'id'>) => {
+      if (activeWedding) {
+        try {
+          const scope =
+            e.scope === 'private-bride'
+              ? ('BRIDE_PRIVATE' as const)
+              : e.scope === 'private-groom'
+              ? ('GROOM_PRIVATE' as const)
+              : ('SHARED' as const);
+
+          const payload = {
+            weddingId: activeWedding.id,
+            title: e.title,
+            amountRwf: e.amount,
+            dateSpent: e.date || new Date().toISOString().split('T')[0],
+            visibilityScope: scope,
+          };
+          const res = await budgetApi.createExpense(payload);
+          if (res.success && res.data) {
+            const newExpense = mapExpenseDtoToExpense(res.data);
+            setExpenses((p) => [newExpense, ...p]);
+            await fetchBudgetSummary();
+            return;
+          }
+        } catch {
+          // Fall back to local update if network error
+        }
+      }
+      setExpenses((p) => [{ ...e, id: uid('e') }, ...p]);
+    },
+    [activeWedding, fetchBudgetSummary]
+  );
+
+  const deleteExpense = useCallback(
+    async (id: string) => {
+      const numId = Number(id);
+      if (!isNaN(numId) && activeWedding) {
+        try {
+          await budgetApi.deleteExpense(numId);
+          await fetchBudgetSummary();
+        } catch {
+          // Fall back to local update
+        }
+      }
+      setExpenses((p) => p.filter((exp) => exp.id !== id));
+    },
+    [activeWedding, fetchBudgetSummary]
+  );
+
   const addGuest = useCallback((g: Omit<Guest, 'id'>) => setGuests((p) => [{ ...g, id: uid('g') }, ...p]), []);
   const updateGuest = useCallback(
     (id: string, patch: Partial<Guest>) => setGuests((p) => p.map((g) => g.id === id ? { ...g, ...patch } : g)),
@@ -202,15 +273,15 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
       fetchActiveWedding,
       setActiveWedding,
       tasks, addTask, updateTask, deleteTask,
-      expenses, addExpense,
+      expenses, budgetSummary, fetchBudgetSummary, addExpense, deleteExpense,
       guests, addGuest, updateGuest,
       homeItems, fetchHomeItems, addHomeItem, updateHomeItem, deleteHomeItem, applyTemplate,
       vendors, addVendor
     }),
     [
       activeWedding, loadingWedding, ceremonies, fetchActiveWedding,
-      tasks, expenses, guests, homeItems, fetchHomeItems, vendors,
-      addTask, updateTask, deleteTask, addExpense, addGuest, updateGuest,
+      tasks, expenses, budgetSummary, fetchBudgetSummary, guests, homeItems, fetchHomeItems, vendors,
+      addTask, updateTask, deleteTask, addExpense, deleteExpense, addGuest, updateGuest,
       addHomeItem, updateHomeItem, deleteHomeItem, applyTemplate, addVendor
     ]
   );
