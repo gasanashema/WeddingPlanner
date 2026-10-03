@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface WeddingCeremonyRepository extends JpaRepository<WeddingCeremony, Long> {
     List<WeddingCeremony> findByWeddingId(Long weddingId);
+
+    java.util.Optional<WeddingCeremony> findByIdAndWeddingId(Long id, Long weddingId);
 }
