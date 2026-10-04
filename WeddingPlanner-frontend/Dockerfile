@@ -3,13 +3,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package files and application source code
 COPY package*.json ./
-RUN npm install
-
-# Copy application source code and build
 COPY . .
-RUN npm run build
+
+# Install dependencies and build dist if missing
+RUN if [ ! -d dist ]; then npm install && npm run build; fi
 
 # Stage 2: Production web server using Nginx
 FROM nginx:alpine
