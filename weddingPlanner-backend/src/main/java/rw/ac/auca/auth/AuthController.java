@@ -41,4 +41,17 @@ public class AuthController {
         UserResponse response = authService.getCurrentUser(authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @RequestBody rw.ac.auca.auth.dto.ChangePasswordRequest request,
+            Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthenticated"));
+        }
+        authService.changePassword(request, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success("Password updated successfully", null));
+    }
 }
+

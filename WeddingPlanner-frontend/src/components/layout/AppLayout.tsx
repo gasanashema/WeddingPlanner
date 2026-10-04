@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRole } from '../../contexts/RoleContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { navItems } from '../../data/navigation';
 import { canAccessPath } from '../../utils/permissions';
 import { EASE } from '../../utils/ui';
@@ -9,11 +10,13 @@ import { LockedState } from '../ui/LockedState';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { MobileNav } from './MobileNav';
+import { ChangePasswordModal } from '../auth/ChangePasswordModal';
 
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { pathname } = useLocation();
   const { role } = useRole();
+  const { user } = useAuth();
   const allowed = canAccessPath(role, pathname);
   const areaName = navItems.find((n) => n.path === pathname)?.label ?? 'This area';
 
@@ -24,6 +27,10 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-screen w-full bg-ivory">
+      <ChangePasswordModal
+        isOpen={Boolean(user?.mustChangePassword)}
+        onClose={() => {}}
+      />
       <aside className="sticky top-0 hidden h-screen shrink-0 lg:flex">
         <Sidebar />
       </aside>

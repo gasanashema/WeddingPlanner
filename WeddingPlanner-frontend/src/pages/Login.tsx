@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import { HeartIcon, LockIcon, MailIcon, UserIcon, PhoneIcon, SparklesIcon } from 'lucide-react';
+import { HeartIcon, LockIcon, MailIcon, UserIcon, PhoneIcon, SparklesIcon, UsersIcon } from 'lucide-react';
 
 export function Login() {
   const { login, register } = useAuth();
@@ -16,6 +16,12 @@ export function Login() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [role, setRole] = useState('ROLE_BRIDE');
 
+  // Partner State (First Page Onboarding)
+  const [partnerFirstName, setPartnerFirstName] = useState('');
+  const [partnerLastName, setPartnerLastName] = useState('');
+  const [partnerPhone, setPartnerPhone] = useState('');
+  const [partnerEmail, setPartnerEmail] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -29,8 +35,12 @@ export function Login() {
           password,
           phoneNumber,
           role,
+          partnerFirstName,
+          partnerLastName,
+          partnerPhone,
+          partnerEmail,
         });
-        toast.success('Account created successfully! Welcome to Ubukwe.');
+        toast.success('Account created! Partner invitation email sent via RabbitMQ with login credentials.');
       } else {
         await login({ email, password });
         toast.success('Signed in successfully!');
@@ -47,8 +57,7 @@ export function Login() {
     try {
       await login({ email: demoEmail, password: 'Password123!' });
       toast.success(`Signed in as ${name}`);
-    } catch (err) {
-      // If demo account doesn't exist in backend yet, automatically register it!
+    } catch {
       try {
         await register({
           firstName: name.split(' ')[0],
@@ -69,7 +78,7 @@ export function Login() {
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+      <div className="sm:mx-auto sm:w-full sm:max-w-lg text-center">
         <div className="inline-flex items-center justify-center mb-2">
           <img src="/logo.png" alt="Ubukwe Logo" className="h-24 w-auto object-contain" />
         </div>
@@ -81,7 +90,7 @@ export function Login() {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg">
         <div className="bg-white py-8 px-6 shadow-xl rounded-xl border border-[#E9E2D8] sm:px-10">
           <div className="flex border-b border-[#E9E2D8] mb-6">
             <button
@@ -110,37 +119,78 @@ export function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {isRegisterMode && (
-              <div className="grid grid-cols-2 gap-3">
+              <>
+                <div className="mb-2 rounded-lg bg-[#581C26]/5 p-3 border border-[#581C26]/10 text-xs text-[#581C26]">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <HeartIcon className="w-4 h-4 fill-current text-[#581C26]" /> Step 1: Choose Your Role
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[#6E6663]">
+                    Select whether you are registering as the Bride or Groom.
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
-                    First Name
+                    Your Role in the Wedding
                   </label>
-                  <div className="relative">
-                    <UserIcon className="w-4 h-4 absolute left-3 top-3 text-[#A19895]" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setRole('ROLE_BRIDE')}
+                      className={`py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                        role === 'ROLE_BRIDE'
+                          ? 'border-[#581C26] bg-[#581C26] text-white shadow-sm'
+                          : 'border-[#D5CBC0] bg-white text-[#1F1B1A] hover:bg-[#FBF9F5]'
+                      }`}
+                    >
+                      <HeartIcon className="w-3.5 h-3.5" /> Bride
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRole('ROLE_GROOM')}
+                      className={`py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                        role === 'ROLE_GROOM'
+                          ? 'border-[#8A5A00] bg-[#8A5A00] text-white shadow-sm'
+                          : 'border-[#D5CBC0] bg-white text-[#1F1B1A] hover:bg-[#FBF9F5]'
+                      }`}
+                    >
+                      <UserIcon className="w-3.5 h-3.5" /> Groom
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
+                      Your First Name
+                    </label>
+                    <div className="relative">
+                      <UserIcon className="w-4 h-4 absolute left-3 top-3 text-[#A19895]" />
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Keza"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] focus:outline-none focus:ring-2 focus:ring-[#581C26]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
+                      Your Last Name
+                    </label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Keza"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] focus:outline-none focus:ring-2 focus:ring-[#581C26]"
+                      placeholder="e.g. Divine"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full px-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] focus:outline-none focus:ring-2 focus:ring-[#581C26]"
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Divine"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] focus:outline-none focus:ring-2 focus:ring-[#581C26]"
-                  />
-                </div>
-              </div>
+              </>
             )}
 
             <div>
@@ -181,7 +231,7 @@ export function Login() {
               <>
                 <div>
                   <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
-                    Phone Number (Optional)
+                    Your Phone Number
                   </label>
                   <div className="relative">
                     <PhoneIcon className="w-4 h-4 absolute left-3 top-3 text-[#A19895]" />
@@ -195,21 +245,81 @@ export function Login() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
-                    Your Wedding Role
-                  </label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] bg-white focus:outline-none focus:ring-2 focus:ring-[#581C26]"
-                  >
-                    <option value="ROLE_BRIDE">Bride (Bride-side + Shared)</option>
-                    <option value="ROLE_GROOM">Groom (Groom-side + Shared)</option>
-                    <option value="ROLE_BRIDE_FAMILY_SUPPORT">Bride Family Support</option>
-                    <option value="ROLE_GROOM_FAMILY_SUPPORT">Groom Family Support</option>
-                    <option value="ROLE_GUEST">Guest</option>
-                  </select>
+                {/* Partner Details Section (First Setup Page) */}
+                <div className="mt-4 border-t border-[#E9E2D8] pt-4">
+                  <div className="mb-3 flex items-center gap-2 rounded-lg bg-gold-50 p-2.5 border border-gold-200 text-xs text-gold-900">
+                    <UsersIcon className="w-4 h-4 text-gold-700 shrink-0" />
+                    <div>
+                      <p className="font-semibold text-ink">Partner Setup (Step 2)</p>
+                      <p className="text-[11px] text-ink-500">
+                        Enter your partner’s name, phone, and email. Your partner will receive an invitation email with credentials and have full authority to invite family support accounts.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
+                          Partner First Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Jean"
+                          value={partnerFirstName}
+                          onChange={(e) => setPartnerFirstName(e.target.value)}
+                          className="w-full px-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] focus:outline-none focus:ring-2 focus:ring-[#581C26]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
+                          Partner Last Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Paul"
+                          value={partnerLastName}
+                          onChange={(e) => setPartnerLastName(e.target.value)}
+                          className="w-full px-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] focus:outline-none focus:ring-2 focus:ring-[#581C26]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
+                        Partner Email Address
+                      </label>
+                      <div className="relative">
+                        <MailIcon className="w-4 h-4 absolute left-3 top-3 text-[#A19895]" />
+                        <input
+                          type="email"
+                          required
+                          placeholder="partner@example.rw"
+                          value={partnerEmail}
+                          onChange={(e) => setPartnerEmail(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] focus:outline-none focus:ring-2 focus:ring-[#581C26]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-[#1F1B1A] mb-1">
+                        Partner Phone Number
+                      </label>
+                      <div className="relative">
+                        <PhoneIcon className="w-4 h-4 absolute left-3 top-3 text-[#A19895]" />
+                        <input
+                          type="tel"
+                          placeholder="+250 788 111 222"
+                          value={partnerPhone}
+                          onChange={(e) => setPartnerPhone(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-[#D5CBC0] rounded-lg text-sm text-[#1F1B1A] focus:outline-none focus:ring-2 focus:ring-[#581C26]"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
@@ -219,7 +329,7 @@ export function Login() {
               disabled={isLoading}
               className="w-full mt-4 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-[#581C26] hover:bg-[#43151D] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#581C26] disabled:opacity-50 transition-colors"
             >
-              {isLoading ? 'Processing...' : isRegisterMode ? 'Create Account' : 'Sign In'}
+              {isLoading ? 'Processing...' : isRegisterMode ? 'Register & Invite Partner' : 'Sign In'}
             </button>
           </form>
 

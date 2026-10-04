@@ -18,7 +18,7 @@ export function SharedWedding() {
     <div>
       <PageHeader
         title="Shared Wedding"
-        description="Everything Aline and Shema plan together. Family supporters don’t see this area."
+        description="Everything the couple plans together. Family supporters don’t see this area."
         scope="shared" />
       
 

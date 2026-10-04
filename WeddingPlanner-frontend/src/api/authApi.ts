@@ -8,6 +8,7 @@ export interface UserDto {
   phoneNumber?: string;
   role: string;
   enabled: boolean;
+  mustChangePassword?: boolean;
 }
 
 export interface AuthResponseData {
@@ -22,11 +23,20 @@ export interface RegisterPayload {
   password?: string;
   phoneNumber?: string;
   role?: string;
+  partnerFirstName?: string;
+  partnerLastName?: string;
+  partnerPhone?: string;
+  partnerEmail?: string;
 }
 
 export interface LoginPayload {
   email: string;
   password?: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword?: string;
+  newPassword?: string;
 }
 
 export const authApi = {
@@ -47,4 +57,12 @@ export const authApi = {
   getMe: (): Promise<ApiResponse<UserDto>> => {
     return apiFetch<UserDto>('/auth/me');
   },
+
+  changePassword: (payload: ChangePasswordPayload): Promise<ApiResponse<void>> => {
+    return apiFetch<void>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };
+

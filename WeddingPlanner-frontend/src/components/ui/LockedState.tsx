@@ -21,8 +21,8 @@ export function LockedState({ area }: LockedStateProps) {
         </span>
         <h1 className="mt-4 font-serif text-2xl font-semibold text-ink">{area} is shared between the couple</h1>
         <p className="mx-auto mt-2 max-w-md text-sm text-ink-500">
-          Only Aline and Shema can open this area. As {person.relation.toLowerCase()}, you can help with everything on the{' '}
-          {side === 'bride' ? 'bride' : 'groom'} side. Ask {people[principal].firstName} if you need something from here.
+          Only the couple can open this area. As {person.relation.toLowerCase()}, you can help with everything on the{' '}
+          {side === 'bride' ? 'bride' : 'groom'} side.
         </p>
         <ul className="mx-auto mt-6 max-w-xs space-y-2 text-left">
           {allowed.map((r) =>

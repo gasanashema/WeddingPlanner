@@ -18,7 +18,7 @@ export function ProfileMenu() {
   const close = useCallback(() => setOpen(false), []);
   const ref = useClickOutside<HTMLDivElement>(open, close);
   const hidden = allScopes.filter((s) => !visibleScopes.includes(s));
-  const hiddenLabels = Array.from(new Set(hidden.map((s) => s === 'private-bride' ? "Aline's private" : s === 'private-groom' ? "Shema's private" : s === 'bride-side' ? 'Bride-side' : s === 'groom-side' ? 'Groom-side' : 'Shared')));
+  const hiddenLabels = Array.from(new Set(hidden.map((s) => s === 'private-bride' ? "Bride's private" : s === 'private-groom' ? "Groom's private" : s === 'bride-side' ? 'Bride-side' : s === 'groom-side' ? 'Groom-side' : 'Shared')));
 
   const displayName = user ? `${user.firstName} ${user.lastName}` : person.name;
   const displayEmail = user ? user.email : person.email;

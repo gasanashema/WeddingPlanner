@@ -61,12 +61,12 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
     if (!user) return;
     try {
       const res = await guestApi.getGuests();
-      if (res.success && res.data && res.data.length > 0) {
+      if (res.success && res.data) {
         const mapped = res.data.map(mapGuestDtoToGuest);
         setGuests(mapped);
       }
     } catch {
-      // Fallback to local default guests
+      setGuests([]);
     }
   }, [user]);
 
@@ -76,13 +76,13 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
       const res = await budgetApi.getBudgetSummary();
       if (res.success && res.data) {
         setBudgetSummary(res.data);
-        if (res.data.expenses && res.data.expenses.length > 0) {
+        if (res.data.expenses) {
           const mapped = res.data.expenses.map(mapExpenseDtoToExpense);
           setExpenses(mapped);
         }
       }
     } catch {
-      // Fallback to initial local expenses
+      setExpenses([]);
     }
   }, [user]);
 
@@ -90,14 +90,15 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
     if (!user) return;
     try {
       const res = await homePrepApi.getHomePreps();
-      if (res.success && res.data && res.data.length > 0) {
+      if (res.success && res.data) {
         const mapped = res.data.map(mapDtoToHomeItem);
         setHomeItems(mapped);
       }
     } catch {
-      // Fallback to local default if backend fetch fails
+      setHomeItems([]);
     }
   }, [user]);
+
 
   const fetchActiveWedding = useCallback(async () => {
     if (!user) {
@@ -124,8 +125,13 @@ export function WeddingDataProvider({ children }: { children: React.ReactNode })
   }, [user, fetchHomeItems, fetchBudgetSummary, fetchGuests]);
 
   useEffect(() => {
+    if (user) {
+      setTasks([]);
+      setVendors([]);
+    }
     fetchActiveWedding();
-  }, [fetchActiveWedding]);
+  }, [user, fetchActiveWedding]);
+
 
   const addTask = useCallback((t: Omit<Task, 'id'>) => setTasks((p) => [{ ...t, id: uid('t') }, ...p]), []);
   const updateTask = useCallback(

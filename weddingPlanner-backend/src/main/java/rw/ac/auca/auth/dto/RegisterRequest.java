@@ -17,4 +17,10 @@ public class RegisterRequest {
     private String password;
     private String phoneNumber;
     private Role role;
+
+    private String partnerFirstName;
+    private String partnerLastName;
+    private String partnerPhone;
+    private String partnerEmail;
 }
+
